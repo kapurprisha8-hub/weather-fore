@@ -3,16 +3,18 @@ import Navbar from './components/Navbar';
 import SearchBar from './components/SearchBar';
 import CurrentWeather from './components/CurrentWeather';
 import WeatherDetails from './components/WeatherDetails';
+import HourlyChart from './components/HourlyChart';
 import ForecastList from './components/ForecastList';
 import ErrorMessage from './components/ErrorMessage';
 import LoadingSpinner from './components/LoadingSpinner';
+import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
 import { getCoordinatesByCity, getWeatherForecast } from './services/weatherApi';
 import './App.css';
 
 /**
  * Main Application Component for the Weather Dashboard.
- * Manages state for selected city, weather data, units (°C/°F), and loading/error states.
+ * Manages state for selected city, weather data, units (°C/°F), user authentication, and modals.
  */
 export default function App() {
   // Current search query / active city
@@ -26,6 +28,17 @@ export default function App() {
   // Loading & Error states - starts true for initial data fetch
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Authentication State
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skypulse_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   /**
    * Fetches weather information for a specified city (used by SearchBar and retry).
@@ -48,6 +61,11 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('skypulse_user');
+    setUser(null);
   };
 
   // Load default city on initial mount with cleanup cancellation
@@ -83,8 +101,14 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Navigation Header */}
-      <Navbar unit={unit} onToggleUnit={setUnit} />
+      {/* Navigation Header with unit toggle & authentication */}
+      <Navbar
+        unit={unit}
+        onToggleUnit={setUnit}
+        user={user}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
+      />
 
       <main className="main-content">
         <div className="content-wrapper">
@@ -112,8 +136,11 @@ export default function App() {
                 unit={unit}
               />
 
-              {/* Highlights grid: Humidity, Wind, Pressure, Rain */}
+              {/* Highlights grid: Humidity, Wind, Pressure, Rain, Sunrise, Sunset */}
               <WeatherDetails weatherData={weatherData} />
+
+              {/* Hourly Temperature Trend (Graphical Representation) */}
+              <HourlyChart hourlyData={weatherData.hourly} unit={unit} />
 
               {/* 5-day daily forecast */}
               <ForecastList dailyData={weatherData.daily} unit={unit} />
@@ -121,6 +148,13 @@ export default function App() {
           )}
         </div>
       </main>
+
+      {/* Login & Sign Up Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={(loggedInUser) => setUser(loggedInUser)}
+      />
 
       {/* Footer with credits and API notes */}
       <Footer />

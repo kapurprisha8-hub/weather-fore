@@ -1,14 +1,17 @@
 import React from 'react';
-import { Droplets, Wind, Gauge, Umbrella } from 'lucide-react';
+import { Droplets, Wind, Gauge, Umbrella, Sunrise, Sunset } from 'lucide-react';
+import { formatTime } from '../services/weatherApi';
 
 /**
- * Grid of secondary weather metrics: Humidity, Wind Speed, Pressure, and Precipitation chance.
+ * Grid of weather metrics including Humidity, Wind, Pressure, Rain, Sunrise, and Sunset.
  */
 export default function WeatherDetails({ weatherData }) {
   if (!weatherData || !weatherData.current) return null;
 
   const { current, daily } = weatherData;
   const precipChance = daily?.precipitation_probability_max?.[0] ?? current.precipitation ?? 0;
+  const sunriseDisplay = daily?.sunrise?.[0] ? formatTime(daily.sunrise[0]) : '06:30 AM';
+  const sunsetDisplay = daily?.sunset?.[0] ? formatTime(daily.sunset[0]) : '06:45 PM';
 
   const metrics = [
     {
@@ -41,14 +44,30 @@ export default function WeatherDetails({ weatherData }) {
       value: `${precipChance}%`,
       subtext: precipChance > 50 ? 'Rain expected' : 'Low probability',
       icon: Umbrella,
-      iconColor: '#fbbf24',
+      iconColor: '#38bdf8',
+    },
+    {
+      id: 'sunrise',
+      label: 'Sunrise',
+      value: sunriseDisplay,
+      subtext: 'Morning dawn',
+      icon: Sunrise,
+      iconColor: '#fb923c',
+    },
+    {
+      id: 'sunset',
+      label: 'Sunset',
+      value: sunsetDisplay,
+      subtext: 'Evening dusk',
+      icon: Sunset,
+      iconColor: '#f43f5e',
     },
   ];
 
   return (
     <section className="weather-details-section">
       <h3 className="section-title">Today's Highlights</h3>
-      <div className="details-grid">
+      <div className="details-grid details-grid-6">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (

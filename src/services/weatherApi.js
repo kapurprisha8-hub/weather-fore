@@ -42,6 +42,20 @@ export function toFahrenheit(celsius) {
 }
 
 /**
+ * Formats time string (ISO 8601 e.g. "2026-10-26T06:43") into 12-hour or 24-hour readable string.
+ */
+export function formatTime(isoString) {
+  if (!isoString) return '--:--';
+  const timePart = isoString.split('T')[1];
+  if (!timePart) return isoString;
+  const [hour, minute] = timePart.split(':');
+  const h = parseInt(hour, 10);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h % 12 || 12;
+  return `${String(displayHour).padStart(2, '0')}:${minute} ${suffix}`;
+}
+
+/**
  * Fetches geographical coordinates for a given city name using Open-Meteo Geocoding.
  * No API key required!
  */
@@ -71,11 +85,11 @@ export async function getCoordinatesByCity(cityName) {
 }
 
 /**
- * Fetches weather data (current + 5-day daily forecast) using coordinates.
+ * Fetches weather data (current, hourly trend, and 5-day daily forecast with sunrise/sunset).
  * No API key required!
  */
 export async function getWeatherForecast(latitude, longitude) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,surface_pressure&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,surface_pressure&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto`;
 
   const response = await fetch(url);
   if (!response.ok) {
